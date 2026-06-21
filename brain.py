@@ -1,6 +1,9 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+import socket
+import json
 from datetime import datetime
+from sklearn.ensemble import RandomForestRegressor
+
 # 1. Training Data (Rainfall in mm, Tide in meters -> Risk %)
 data = {
     'rainfall': [0, 50, 100, 200, 300, 500, 10, 150, 400, 20, 80, 250, 600],
@@ -13,61 +16,71 @@ df = pd.DataFrame(data)
 model = RandomForestRegressor(n_estimators=100, random_state=42)
 model.fit(df[['rainfall', 'tide']], df['risk'])
 
-def get_flood_prediction(rain, tide_level):
-    prediction = model.predict(pd.DataFrame([[rain, tide_level]], columns=['rainfall', 'tide']))
-    return f"Calculated Flood/Salinity Risk: {prediction[0]:.2f}%"
+def transmit_telemetry(payload):
+    """Helper to send prediction data over to the network.py mesh."""
+    host = '127.0.0.1'
+    port = 7777
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((host, port))
+            packet = {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "rainfall": payload.get('Rainfall'),
+                "tide": payload.get('Tide'),
+                "risk_pct": float(payload.get('Risk_Pct')),
+                "status": payload.get('Status')
+            }
+            s.sendall(json.dumps(packet).encode())
+            print("? Telemetry successfully piped to mesh cluster network.")
+    except ConnectionRefusedError:
+        print("[NETWORK WARNING] Mesh network offline. Telemetry not transmitted.")
+    except Exception as e:
+        print(f"[NETWORK ERROR] Failed to forward telemetry: {e}")
 
-## 3. Interactive Risk Simulator
+# 3. Interactive Risk Simulator Menu
 print("\n" + "="*40)
-print("   AQUAHEURISTIC AI: STRATEGIC MONITOR   ")
+print("  AQUAHEURISTIC AI: STRATEGIC MONITOR  ")
 print("="*40)
 
 while True:
-    print("\n[NEW SIMULATION - Type 'exit' to stop]")
     try:
-        val = input("Enter Current Rainfall (mm): ")
-        if val.lower() == 'exit':
-            print("Shutting down Strategic Monitor... System Offline.")
+        user_rain = input("\nEnter Rainfall value (mm) [or 'exit' to quit]: ").strip()
+        if user_rain.lower() == 'exit':
+            print("Shutting down monitor console.")
             break
             
-        user_rain = float(val)
-        user_tide = float(input("Enter Current Tide Level (m): "))
-
-        # 1. Get AI Prediction
-        result_text = get_flood_prediction(user_rain, user_tide)
-        # Extract numerical value from the string for logic
-        prediction_val = float(result_text.split(": ")[1].replace("%", ""))
-
-        # 2. Display Result with Visual Alerts
-        print("-" * 40)
-        print("ANALYSIS COMPLETE:")
-        print(result_text)
-
-        status = "NORMAL"
-        if prediction_val > 80:
-            print("🚨 ALERT: CRITICAL RISK! ACTIVATE FLOOD BARRIERS. 🚨")
-            status = "CRITICAL"
-        elif prediction_val > 50:
-            print("⚠️ WARNING: ELEVATED RISK. MONITOR SENSORS. ⚠️")
-            status = "WARNING"
+        user_tide = input("Enter Tide level (meters): ").strip()
+        
+        rain_val = float(user_rain)
+        tide_val = float(user_tide)
+        
+        pred_features = pd.DataFrame([[rain_val, tide_val]], columns=['rainfall', 'tide'])
+        prediction_val = float(model.predict(pred_features)[0])
+        
+        if prediction_val > 75:
+            status = "CRITICAL RISK / OVERFLOW"
+        elif prediction_val > 40:
+            status = "ELEVATED RISK"
         else:
-            print("✅ STATUS: STABLE. NO IMMEDIATE ACTION REQUIRED.")
-        print("-" * 40)
-
-        # 3. BLACK BOX LOGGING
+            status = "STABLE OPERATIONAL LEVELS"
+            
+        print(f"\n>> Target Status: {status}")
+        print(f">> Calculated Risk: {prediction_val:.2f}%")
+        
         log_entry = {
-            'Timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'Rainfall': user_rain,
-            'Tide': user_tide,
+            'Rainfall': rain_val,
+            'Tide': tide_val,
             'Risk_Pct': prediction_val,
             'Status': status
         }
         
-        # Save instantly to a CSV file
         log_df = pd.DataFrame([log_entry])
         file_exists = __import__('os').path.exists('flood_logs.csv')
         log_df.to_csv('flood_logs.csv', mode='a', index=False, header=not file_exists)
-        print("✓ Data successfully logged to flood_logs.csv")
-
+        print("? Data successfully logged to flood_logs.csv")
+        
+        # Forward data live across the pipeline
+        transmit_telemetry(log_entry)
+        
     except ValueError:
-        print("Error: Invalid input. Please enter numbers for rainfall and tide.")
+        print("Error: Invalid input. Please enter valid numbers for rainfall and tide.")
