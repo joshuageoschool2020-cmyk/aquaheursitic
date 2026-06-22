@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+    async function initializeAnalysis() {
+        const text = document.querySelector('textarea').value;
+        const response = await fetch('/explain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        const data = await response.json();
+        // This will update the output box with the response from brain.py
+        document.querySelector('.h-32').innerText = data.result;
+    }
+</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { brand: '#5F57FF' } } } }
