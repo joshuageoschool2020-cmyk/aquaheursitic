@@ -8,7 +8,7 @@ from brain import process_concept
 
 app = FastAPI()
 
-# Mount the static folder
+# Mount the 'static' directory so FastAPI can access your HTML and CSS files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
