@@ -5,39 +5,39 @@ from brain import process_concept
 
 app = FastAPI()
 
-# This is the updated UI_HTML without the user name
+# This updated UI_HTML uses advanced grid and flexbox for the exact look you want
 UI_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0c121c; color: #78a1bb; font-family: 'Courier New', monospace; }
-        .panel { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; }
+        body { background-color: #0b1016; color: #88a7c2; font-family: 'Courier New', monospace; }
+        .panel { background-color: #121820; border: 1px solid #2a3547; border-radius: 4px; }
+        .accent-blue { color: #5d8cb0; }
     </style>
 </head>
 <body class="p-6">
-    <header class="mb-6 border-b border-gray-700 pb-4">
-        <h1 class="text-xl font-bold text-white">HEURISTIC_ENGINE</h1>
-        <p class="text-xs text-gray-400">SYSTEM OPERATIONAL [v3.1]</p>
+    <header class="mb-6">
+        <h1 class="text-2xl font-bold text-white tracking-widest">HEURISTIC_ENGINE</h1>
+        <p class="text-xs text-gray-500 uppercase">System Operational [v3.1]</p>
     </header>
     
-    <div class="grid grid-cols-2 gap-6">
-        <!-- Input Panel -->
-        <div class="panel p-5">
-            <h2 class="text-blue-300 mb-3 font-bold uppercase text-sm tracking-widest">// DATA INGESTION PANEL</h2>
-            <div class="border-2 border-dashed border-gray-600 p-6 text-center mb-4">
-                <p>Drag and Drop or Click</p>
+    <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-4 panel p-5">
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-4">// HEURISTIC ANALYTICS WORKSPACE</h2>
+            <div class="border border-blue-900/50 p-6 text-center mb-4 bg-blue-900/5">
+                <p class="text-sm">Drag and Drop or Click</p>
+                <p class="text-[10px] text-gray-600">File Types: (PDF, CSV, JSON, TXT)</p>
             </div>
-            <textarea id="textarea" class="w-full h-32 bg-black border border-gray-600 p-3 text-blue-200" placeholder="// Raw Concept Entry..."></textarea>
-            <button onclick="runAnalysis()" class="w-full mt-4 bg-blue-700 py-2 font-bold hover:bg-blue-600">INITIALIZE_ANALYSIS</button>
+            <textarea id="textarea" class="w-full h-32 bg-black border border-gray-700 p-3 text-blue-200 text-sm" placeholder="// Quantum datasets..."></textarea>
+            <button onclick="runAnalysis()" class="w-full mt-4 bg-indigo-700 py-3 text-white font-bold hover:bg-indigo-600 transition text-sm">INITIALIZE_ANALYSIS</button>
         </div>
 
-        <!-- Output Panel -->
-        <div class="panel p-5">
-            <h2 class="text-blue-300 mb-3 font-bold uppercase text-sm tracking-widest">// SYNTHETIC_OUTPUT // Analysis Report</h2>
-            <div id="output-box" class="h-64 overflow-y-auto border border-gray-700 p-4 text-sm text-gray-300">
-                // Awaiting input sequence...
+        <div class="col-span-8 panel p-5">
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-4">// SYNTHETIC_OUTPUT // Analysis Report</h2>
+            <div id="output-box" class="h-64 overflow-y-auto border border-gray-800 p-4 text-sm text-gray-300">
+                // System ready. Awaiting input sequence...
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@ UI_HTML = """
         async function runAnalysis() {
             const input = document.getElementById('textarea').value;
             const output = document.getElementById('output-box');
-            output.innerText = "Processing sequence...";
+            output.innerText = "Ingesting core dataset... Mapping heuristics...";
             const res = await fetch('/explain', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -74,4 +74,5 @@ def explain_text(data: RequestData):
 
 if __name__ == "__main__":
     import os
-    uvicorn.run("api:app", host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("api:app", host="0.0.0.0", port=port)
