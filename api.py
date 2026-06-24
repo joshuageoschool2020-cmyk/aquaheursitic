@@ -67,6 +67,7 @@ async def root():
 
 @app.post("/explain")
 async def explain_text(data: RequestData):
+    # This calls your brain.py logic
     result_data = process_concept(data.text)
     return {
         "result": result_data["text"],
