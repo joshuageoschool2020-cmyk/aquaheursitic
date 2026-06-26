@@ -1,9 +1,51 @@
-def process_concept(text):
+"""
+brain.py — Core Heuristic Processing Engine
+Heuristic OS V3.1 | AquaHeuristic Platform
+
+ROOT CAUSE FIX:
+    Previously returned a raw str. api.py expected a dict with keys
+    'text' and 'confidence', causing TypeError → 500 on every request.
+    Now returns ConceptReport (TypedDict) matching the API contract.
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import TypedDict
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Data contract (mirrors the API's expected response shape)
+# ---------------------------------------------------------------------------
+class ConceptReport(TypedDict):
+    text: str
+    confidence: float
+
+
+# ---------------------------------------------------------------------------
+# Core logic
+# ---------------------------------------------------------------------------
+def process_concept(text: str) -> ConceptReport:
     """
-    Analyzes input concepts and returns a structured heuristic report.
-    No input() functions are used here to ensure cloud compatibility.
+    Analyzes an input concept and returns a structured heuristic report.
+
+    Args:
+        text: The concept or sequence to analyze. Must be non-empty.
+
+    Returns:
+        ConceptReport with 'text' (formatted analysis) and 'confidence' (float).
+
+    Raises:
+        ValueError: If input text is empty or whitespace-only.
     """
-    # Hardcoded default logic to avoid server-side prompts
+    if not text or not text.strip():
+        raise ValueError("Input text must not be empty.")
+
+    preview = text[:50] + "..." if len(text) > 50 else text
+    logger.info("process_concept | input='%s'", preview)
+
     report = (
         f"[SYSTEM_HEURISTIC_CORE]\n"
         f"--------------------------------------------------\n"
@@ -17,4 +59,7 @@ def process_concept(text):
         f"STATUS: [VALIDATED]\n"
         f"CONFIDENCE_METRIC: 98.4%\n"
     )
-    return report
+
+    # ✅ FIXED: Return dict, not str — matches API contract in technical_spec.md
+    return ConceptReport(text=report, confidence=98.4)
+   
